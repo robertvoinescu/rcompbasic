@@ -1,0 +1,17 @@
+
+def from_mo(mol, filename, mo_coeff, orbsym=None, tol=1e-8, float_format=float):
+    '''Use the given MOs to transfrom the 1-electron and 2-electron integrals
+    then dump them to FCIDUMP.
+    '''
+    if getattr(mol, '_mesh', None):
+        raise NotImplementedError('PBC system')
+
+    if orbsym is None:
+        orbsym = getattr(mo_coeff, 'orbsym', None)
+    t = mol.intor_symmetric('int1e_kin')
+    v = mol.intor_symmetric('int1e_nuc')
+    h1e = reduce(numpy.dot, (mo_coeff.T, t+v, mo_coeff))
+    eri = ao2mo.full(mol, mo_coeff, verbose=0)
+    nuc = mol.energy_nuc()
+    from_integrals(filename, h1e, eri, h1e.shape[0], mol.nelec, nuc, 0, orbsym,
+                   tol, float_format)
